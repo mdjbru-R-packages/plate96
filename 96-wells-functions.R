@@ -215,6 +215,7 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
     #' @return Data frame with the plate plan
     minGrey = 0.9
     maxGrey = 0.6
+    stripsInfo = NULL
     if (is.null(blockLength)) {
         if (is.null(wells)) {
             wells = rectWells("A01", "H12")
@@ -231,11 +232,19 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
             emptySamples = 0
         }
         samples = sample(c(samples, rep(NA, emptySamples)))
+        naIndices = which(is.na(samples))
+        if (length(naIndices) > 0) {
+            for (i in 1:length(naIndices)) {
+                samples[naIndices[i]] = paste0("NA_sample-", i)
+            }
+        }
         samplesStrips = split(samples,
                               rep(1:96, each = blockLength)[1:length(samples)])
         samplesStripsRef = samplesStrips
         #greyLevels = as.list(sapply(seq(minGrey, maxGrey, length.out = length(samplesStripsRef)),grey))
         greyLevels = as.list(adjustcolor(RColorBrewer::brewer.pal(length(samplesStripsRef), "Set2"), alpha.f = 0.5)[1:length(samplesStripsRef)])
+        stripsInfo = list(strips = samplesStripsRef,
+                          colors = greyLevels)
         for (i in 1:length(greyLevels)) {
             greyLevels[[i]] = rep(greyLevels[[i]], blockLength)
         }
@@ -256,20 +265,66 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
                          col = unlist(greyLevels),
                          stringsAsFactors = F)
     }
-    out$sampleId = as.numeric(factor(out$sample))
+    class(stripsInfo) = c("strips", "list")
+    outSamples = out$samples
+    outSamples[grepl("NA_sample-", outSamples)] = NA
+    out$sampleId = as.numeric(factor(outSamples))
     class(out) = c("platePlan", "data.frame")
-    return(out)
+    out = out[order(out$well), ]
+    o = list(plan = out, strips = stripsInfo)
+    class(o) = "plateInfo"
+    return(o)
 }
 
-### ** plot.platePlan(platePlan)
+### ** plot.plateInfo(plateInfo)
 
-plot.platePlan = function(platePlan) {
+plot.plateInfo = function(plateInfo) {
+    nRows = ceiling(length(plateInfo[["strips"]][["strips"]])/3)
+    layout(matrix(c(1, 1, 1, 2:(nRows*3 + 1)), ncol = 3, byrow = T),
+           heights = c(0.5, rep(0.5/nRows, nRows)))
+    platePlan = plateInfo[["plan"]]
     if ("col" %in% names(platePlan)) {
         displayWells(platePlan, labels = "sampleId", wells = "well", col = "col")
+        plotStrips(plateInfo)
     } else {
         displayWells(platePlan, labels = "sampleId", wells = "well")
     }
 }
+
+### ** plotStrips(plateInfo)
+
+plotStrips = function(plateInfo) {
+    strips = plateInfo[["strips"]][["strips"]]
+    nStrips = length(strips)
+    s2id = unique(plateInfo[["plan"]][, c("samples", "sampleId")])
+    s2col = unique(plateInfo[["plan"]][, c("samples", "col")])
+    for (i in 1:length(strips)) {
+        strip = strips[[i]]
+        par(mar = c(0, 0, 0, 0))
+        plot(0, type = "n", bty = "n", axes = F, xlab = "", ylab = "",
+             xlim = c(0, length(strip) + 1),
+             ylim = c(0, length(strip) + 1), asp = 1)
+        for (j in 1:length(strip)) {
+            drawCircle(1, j, radius = 0.40, col = s2col$col[s2col$samples == strip[j]])
+            text(1, j, s2id$sampleId[s2id$samples == strip[j]], cex = 1)
+            text(2, j, strip[j], pos = 4)
+        }
+    }
+}
+
+### ** savePlan(plateInfo, filename)
+
+savePlan = function(plateInfo, filename) {
+    pdf(filename, width = 8.27, height = 11.69, pointsize = 24)
+    plot.plateInfo(plateInfo)
+    dev.off()
+}
+
+### *** Test
+
+samples = c("c0", "c1", "c2", "c3", "c4", "c5", "c6", "w", "DNase+", "DNase-", "EGTA-", "incub90", "incub75", "incub60", "dil2", "dil4", "dil8", "dil16", "dil32")
+d = distribSamples(samples, replicates = 3, blockLength = 4)
+savePlan(d, "toto.pdf")
 
 ### ** analyzePlate(filename, wells, samples, ref)
 
