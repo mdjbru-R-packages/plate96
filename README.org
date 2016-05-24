@@ -1,0 +1,26 @@
+* plate96: a basic set of functions useful for handling 96-well plates
+
+** Installation
+
+#+BEGIN_SRC R
+library(devtools)
+install_github("mdjbru-R-packages/plate96")
+#+END_SRC
+
+** Quick example
+
+The =distribSamples= function can generate a PCR plate plan with randomized
+samples in the plate:
+
+#+BEGIN_SRC R
+samples = c("c0", "c1", "c2", "c3", "c4", "c5", "c6", "w", "DNase+", "DNase-",
+            "EGTA-", "incub90", "incub75", "incub60", "dil2", "dil4", "dil8",
+            "dil16", "dil32", "toto1", "toto2", "toto3", "toto4", "a1", "a2",
+            "a3", "a4", "a5", "b1", "b2", "b3", "b4")
+d = distribSamples(samples, replicates = 3, blockLength = 4, palette = "Pastel1",
+                   alpha.f = 1)
+savePlan(d, "toto.pdf")
+#+END_SRC
+
+The resulting plan is saved in =toto.pdf=.
+

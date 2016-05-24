@@ -1,0 +1,13 @@
+Package: plate96
+Title: Functions related to 96-well plates in the biology lab
+Version: 0.0.0.1
+Authors@R: person("Matthieu", "Bruneaux", email = "matthieu.bruneaux@gmail.com", role = c("aut", "cre"))
+Description: This package provides a few convenience functions for manipulating
+    96-well plates in the lab (e.g. plate plan, data from plate reading)
+Depends:
+    R (>= 3.2.2)
+Imports:
+    RColorBrewer
+License: MIT
+LazyData: true
+RoxygenNote: 5.0.1

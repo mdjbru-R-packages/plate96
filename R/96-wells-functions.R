@@ -162,6 +162,7 @@ rectWells = function(topleft, bottomright, transpose = F) {
     #' @examples
     #' rectWells("A01", "C06")
     #'
+    #' @export
     rows = toupper(letters)[1:8]
     columns = c(paste0("0", 1:9), as.character(10:12))
     minRow = which(rows == substr(topleft, 1, 1))
@@ -218,6 +219,17 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
     #'   sample blocks of length blockLength
     #'
     #' @return Data frame with the plate plan
+    #'
+    #' @examples
+    #' samples = c("c0", "c1", "c2", "c3", "c4", "c5", "c6", "w", "DNase+", "DNase-",
+    #'             "EGTA-", "incub90", "incub75", "incub60", "dil2", "dil4", "dil8",
+    #'             "dil16", "dil32", "toto1", "toto2", "toto3", "toto4", "a1", "a2",
+    #'             "a3", "a4", "a5", "b1", "b2", "b3", "b4")
+    #' d = distribSamples(samples, replicates = 3, blockLength = 4, palette = "Pastel1",
+    #'                    alpha.f = 1)
+    #' savePlan(d, "toto.pdf")
+    #'
+    #' @export
     minGrey = 0.9
     maxGrey = 0.6
     stripsInfo = NULL
@@ -291,6 +303,7 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
 ### ** plot.plateInfo(plateInfo)
 
 plot.plateInfo = function(plateInfo) {
+    #' @export
     nRows = ceiling(length(plateInfo[["strips"]][["strips"]])/3)
     layout(matrix(c(1, 1, 1, 2:(nRows*3 + 1)), ncol = 3, byrow = T),
            heights = c(0.5, rep(0.5/nRows, nRows)))
@@ -337,6 +350,7 @@ plotStrips = function(plateInfo) {
 ### ** savePlan(plateInfo, filename)
 
 savePlan = function(plateInfo, filename) {
+    #' @export
     pdf(filename, width = 8.27, height = 11.69, pointsize = 24)
     plot.plateInfo(plateInfo)
     dev.off()
