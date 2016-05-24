@@ -202,9 +202,9 @@ plateCoord = function(data) {
     return(data)
 }
 
-### ** distribSamples(samples, replicates = 3, wells = NULL, blockLength = NULL)
+### ** distribSamples(samples, replicates = 3, wells = NULL, blockLength = NULL, palette = "Set2", alpha.f = 0.5)
 
-distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = NULL) {
+distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = NULL, palette = "Set2", alpha.f = 0.5) {
     #' Distribute replicated samples randomly across a 96-well plate
     #'
     #' @param samples Vector of string containing the sample names
@@ -247,7 +247,8 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
                               rep(1:96, each = blockLength)[1:length(samples)])
         samplesStripsRef = samplesStrips
         #greyLevels = as.list(sapply(seq(minGrey, maxGrey, length.out = length(samplesStripsRef)),grey))
-        greyLevels = as.list(adjustcolor(RColorBrewer::brewer.pal(length(samplesStripsRef), "Set2"), alpha.f = 0.5)[1:length(samplesStripsRef)])
+        greyLevels = as.list(adjustcolor(RColorBrewer::brewer.pal(length(samplesStripsRef),
+                                                                  palette), alpha.f = alpha.f)[1:length(samplesStripsRef)])
         stripsInfo = list(strips = samplesStripsRef,
                           colors = greyLevels)
         for (i in 1:length(greyLevels)) {
@@ -323,7 +324,7 @@ plotStrips = function(plateInfo) {
             }
             drawCircle(1, j, radius = 0.40, col = s2col$col[s2col$samples == strip[j]],
                        lwd = lwd)
-            text(1, j, s2id$sampleId[s2id$samples == strip[j]], cex = 1)
+            text(1, j, s2id$sampleId[s2id$samples == strip[j]], cex = 0.65)
             labelSample = strip[j]
             if (grepl("NA_sample-", labelSample)) {
                 labelSample = NA
@@ -343,8 +344,12 @@ savePlan = function(plateInfo, filename) {
 
 ### *** Test
 
-samples = c("c0", "c1", "c2", "c3", "c4", "c5", "c6", "w", "DNase+", "DNase-", "EGTA-", "incub90", "incub75", "incub60", "dil2", "dil4", "dil8", "dil16", "dil32")
-d = distribSamples(samples, replicates = 3, blockLength = 4)
+samples = c("c0", "c1", "c2", "c3", "c4", "c5", "c6", "w", "DNase+", "DNase-",
+            "EGTA-", "incub90", "incub75", "incub60", "dil2", "dil4", "dil8",
+            "dil16", "dil32", "toto1", "toto2", "toto3", "toto4", "a1", "a2",
+            "a3", "a4", "a5", "b1", "b2", "b3", "b4")
+d = distribSamples(samples, replicates = 3, blockLength = 4, palette = "Pastel1",
+                   alpha.f = 1)
 savePlan(d, "toto.pdf")
 
 ### ** analyzePlate(filename, wells, samples, ref)
