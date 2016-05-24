@@ -307,7 +307,11 @@ plotStrips = function(plateInfo) {
         for (j in 1:length(strip)) {
             drawCircle(1, j, radius = 0.40, col = s2col$col[s2col$samples == strip[j]])
             text(1, j, s2id$sampleId[s2id$samples == strip[j]], cex = 1)
-            text(2, j, strip[j], pos = 4)
+            labelSample = strip[j]
+            if (grepl("NA_sample-", labelSample)) {
+                labelSample = NA
+            }
+            text(2, j, labelSample, pos = 4)
         }
     }
 }
