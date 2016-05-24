@@ -39,9 +39,9 @@ drawCircle = function(x, y, radius, ...) {
     polygon(x, y, ...)
 }
 
-### ** displayWells(x, labels, wells = "well", col = NULL)
+### ** displayWells(x, labels, wells = "well", col = NULL, lwd = NULL)
 
-displayWells = function(x, labels = NULL, wells = "well", col = NULL) {
+displayWells = function(x, labels = NULL, wells = "well", col = NULL, lwd =NULL) {
     #' Display some labels in the 96-well plate format
     #'
     #' @param x Data frame with wells and labels in columns
@@ -85,8 +85,13 @@ displayWells = function(x, labels = NULL, wells = "well", col = NULL) {
             rowI = which(rows == rowsX[i])
             columnI = which(columns == columnsX[i])
             if (!is.null(col)) {
+                if (!is.null(lwd)) {
+                    lwdValue = x[[lwd]][i]
+                } else {
+                    lwdValue = 1
+                }
                 drawCircle(columnI + 0.5, 8 - rowI + 0.5, radius = 0.45,
-                           col = x[[col]][i])
+                           col = x[[col]][i], lwd = lwdValue)
             }
             text(columnI + 0.5, 8 - rowI + 0.5, labels = labels[i],
                  col = "black")
@@ -250,20 +255,26 @@ distribSamples = function(samples, replicates = 3, wells = NULL, blockLength = N
         }
         samplesStrips = rep(samplesStrips, replicates)
         greyLevels = rep(greyLevels, replicates)
+        lwd = rep(list(rep(1, blockLength)), length(samplesStrips))
         for (i in 1:length(samplesStrips)) {
             if (sample(c(1, 2), 1) == 2) {
                 samplesStrips[[i]] = rev(samplesStrips[[i]])
+                lwd[[i]][1] = 4
+            } else {
+                lwd[[i]][blockLength] = 4
             }
         }
         samplesStripsOrdering = sample(1:length(samplesStrips))
         samplesStrips = samplesStrips[samplesStripsOrdering]
         greyLevels = greyLevels[samplesStripsOrdering]
+        lwd = unlist(lwd[samplesStripsOrdering])
         samples = unlist(samplesStrips)
         stopifnot(length(samples) <= 96)
         out = data.frame(samples,
                          well = rectWells("A01", "H12", transpose = T)[1:length(samples)],
                          col = unlist(greyLevels),
-                         stringsAsFactors = F)
+                         stringsAsFactors = F,
+                         lwd = lwd)
     }
     class(stripsInfo) = c("strips", "list")
     outSamples = out$samples
@@ -284,7 +295,7 @@ plot.plateInfo = function(plateInfo) {
            heights = c(0.5, rep(0.5/nRows, nRows)))
     platePlan = plateInfo[["plan"]]
     if ("col" %in% names(platePlan)) {
-        displayWells(platePlan, labels = "sampleId", wells = "well", col = "col")
+        displayWells(platePlan, labels = "sampleId", wells = "well", col = "col", lwd = "lwd")
         plotStrips(plateInfo)
     } else {
         displayWells(platePlan, labels = "sampleId", wells = "well")
@@ -305,13 +316,19 @@ plotStrips = function(plateInfo) {
              xlim = c(0, length(strip) + 1),
              ylim = c(0, length(strip) + 1), asp = 1)
         for (j in 1:length(strip)) {
-            drawCircle(1, j, radius = 0.40, col = s2col$col[s2col$samples == strip[j]])
+            if (j == length(strip)) {
+                lwd = 4
+            } else {
+                lwd = 1
+            }
+            drawCircle(1, j, radius = 0.40, col = s2col$col[s2col$samples == strip[j]],
+                       lwd = lwd)
             text(1, j, s2id$sampleId[s2id$samples == strip[j]], cex = 1)
             labelSample = strip[j]
             if (grepl("NA_sample-", labelSample)) {
                 labelSample = NA
             }
-            text(2, j, labelSample, pos = 4)
+            text(1.5, j, labelSample, pos = 4)
         }
     }
 }
