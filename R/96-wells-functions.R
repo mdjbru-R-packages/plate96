@@ -39,6 +39,19 @@ drawCircle = function(x, y, radius, ...) {
     polygon(x, y, ...)
 }
 
+### ** plateCoord(data)
+
+plateCoord = function(data) {
+    #' Add a colPos and rowCol columns to a data frame with a well column
+    #'
+    data$colPos = as.integer(substr(data$well, 2, 3))
+    data$rowPos = sapply(substr(data$well, 1, 1),
+                         function(x) which(toupper(letters)[1:12] == x))
+    data$colPos = data$colPos - min(data$colPos)
+    data$rowPos = data$rowPos - min(data$rowPos)
+    return(data)
+}
+
 ### ** displayWells(x, labels, wells = "well", col = NULL, lwd = NULL)
 
 displayWells = function(x, labels = NULL, wells = "well", col = NULL, lwd =NULL) {
@@ -99,11 +112,97 @@ displayWells = function(x, labels = NULL, wells = "well", col = NULL, lwd =NULL)
     }
 }
 
+### ** displayBioscreenWells(x, labels, wells = "well", col = NULL, lwd = NULL)
+
+displayBioscreenWells = function(x, labels = NULL, wells = "well", col = NULL,
+                                 lwd =NULL) {
+    #' Display some labels in the Bioscreen plate format
+    #'
+    #' The format for the well names can be either purely numeric (from 1 to
+    #' 100) or can used letter/number coordinates a la 96-well plate (from A01
+    #' to J10, letters for rows and numbers for columns).
+    #'
+    #' @param x Data frame with wells and labels in columns
+    #' @param labels String, name of the column with the labels to display
+    #' @param wells String, name of the column with the well names.
+    #' @param col String, name of the column with the color values
+    #'
+    #' @export
+    par(mar = rep(0, 4))
+    plot(0, type = "n", xlim = c(0, 11), ylim = c(0, 11), axes = F,
+         xlab = F, ylab = F, asp = 1)
+    # Determine if well coordinates are in numeric or letter/number format
+    if (any(tolower(unlist(strsplit(as.character(x[[wells]]), ""))) %in% letters)) {
+        # Letter/number format
+        wellsChar = as.character(x[[wells]])
+        rowX = substr(wellsChar, 1, 1)
+        columnX = substr(wellsChar, 2, 3)
+        rowI = plateCoord(data.frame(well = x[[wells]]))$rowPos + 1
+        colI = plateCoord(data.frame(well = x[[wells]]))$colPos + 1
+    } else {
+        # Numeric format
+        wells = as.numeric(x[[wells]])
+        rowX = wells %% 10
+        rowX[rowX == 0] = 10
+        columnX = floor(wells/10) + 1
+        columnX[(floor(wells/10) == wells/10)] = columnX[(floor(wells/10) == wells/10)] - 1
+        rowI = rowX
+        colI = columnX
+    }
+    # Plot row and column names
+    rows = toupper(letters)[1:10]
+    columns = c(paste0("0", 1:9), as.character(10))
+    text(0.5, y = 9:0 + 0.5, labels = rows)
+    text(1:10 + 0.5, y = 10.5, labels = columns)
+    # Draw border
+    rect(1, 0, 11, 10)
+    # Draw circles
+    for (i in 1:10) {
+        for (j in 1:10) {
+            xc = j + 0.5
+            yc = 10 - i + 0.5
+            drawCircle(xc, yc, radius = 0.45)
+        }
+    }
+    # Draw labels
+    if (is.null(labels)) {
+        x$temp.plot.labels = rownames(x)
+        labels = "temp.plot.labels"
+    }
+    if (!is.null(labels)) {
+        labels = x[[labels]]
+        if (is.numeric(labels[1])) {
+            labels = round(labels, 3)
+        }
+        labels = as.character(labels)
+        for (i in 1:length(labels)) {
+            rowIi = rowI[i]
+            columnIi = colI[i]
+            if (!is.null(col)) {
+                if (!is.null(lwd)) {
+                    lwdValue = x[[lwd]][i]
+                } else {
+                    lwdValue = 1
+                }
+                drawCircle(columnIi + 0.5, 10 - rowIi + 0.5, radius = 0.45,
+                           col = x[[col]][i], lwd = lwdValue)
+            }
+            text(columnIi + 0.5, 10 - rowIi + 0.5, labels = labels[i],
+                 col = "black")
+        }
+    }
+}
+
 ### *** Test
 
 a = data.frame(well = c("A01", "A02", "C10"),
-               sample = c(1, 2, 3))
-displayWells(a, "sample")
+               sample = c(1, 2, 3),
+               wellNum = c(10, 15, 99))
+displayBioscreenWells(a, "sample")
+displayBioscreenWells(a, "sample", "wellNum")
+b = data.frame(well = 1:100,
+               sample = 1:100)
+displayBioscreenWells(b, "sample")
 
 ### ** processPerkinElmerTable(data)
 
@@ -188,19 +287,6 @@ rectWells = function(topleft, bottomright, transpose = F) {
         }
     }
     return(o)
-}
-
-### ** plateCoord(data)
-
-plateCoord = function(data) {
-    #' Add a colPos and rowCol columns to a data frame with a well column
-    #'
-    data$colPos = as.integer(substr(data$well, 2, 3))
-    data$rowPos = sapply(substr(data$well, 1, 1),
-                         function(x) which(toupper(letters)[1:8] == x))
-    data$colPos = data$colPos - min(data$colPos)
-    data$rowPos = data$rowPos - min(data$rowPos)
-    return(data)
 }
 
 ### ** distribSamples(samples, replicates = 3, wells = NULL, blockLength = NULL, palette = "Set2", alpha.f = 0.5)
